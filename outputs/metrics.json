@@ -1,0 +1,6 @@
+{
+  "n_observations": 432,
+  "n_batches": 24,
+  "roc_auc": 0.911,
+  "brier_score": 0.118
+}
