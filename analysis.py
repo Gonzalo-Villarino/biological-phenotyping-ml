@@ -5,6 +5,7 @@ import json
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss, roc_auc_score
 from sklearn.model_selection import GroupKFold, cross_val_predict
@@ -105,6 +106,29 @@ def main() -> None:
         }
     ).sort_values("standardised_coefficient", key=np.abs, ascending=False)
     coefficients.to_csv(OUTPUT_DIR / "feature_coefficients.csv", index=False)
+
+    figure, axes = plt.subplots(1, 2, figsize=(10, 4.2))
+    axes[0].plot([0, 1], [0, 1], linestyle="--", color="#8A969F", label="Perfect calibration")
+    axes[0].plot(
+        calibration["mean_predicted_probability"],
+        calibration["observed_outcome_rate"],
+        marker="o",
+        color="#004B76",
+        linewidth=2,
+        label="Grouped out-of-fold model",
+    )
+    axes[0].set(xlabel="Mean predicted probability", ylabel="Observed outcome rate", title="Calibration")
+    axes[0].set_xlim(0, 1); axes[0].set_ylim(0, 1); axes[0].legend(frameon=False, fontsize=8)
+
+    plotted = coefficients.sort_values("standardised_coefficient")
+    colors = ["#A64B3C" if value < 0 else "#00747A" for value in plotted["standardised_coefficient"]]
+    axes[1].barh(plotted["feature"], plotted["standardised_coefficient"], color=colors)
+    axes[1].axvline(0, color="#8A969F", linewidth=0.8)
+    axes[1].set(xlabel="Standardised coefficient", title="Feature effects")
+    figure.suptitle("Biological phenotyping model - group-aware evaluation", fontsize=13, fontweight="bold")
+    figure.tight_layout()
+    figure.savefig(OUTPUT_DIR / "phenotyping_model_summary.png", dpi=180, bbox_inches="tight")
+    plt.close(figure)
 
     print(json.dumps(metrics, indent=2))
 
